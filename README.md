@@ -59,17 +59,29 @@ the profiler will see that
 * Local variable "newitems" is [String]
 * Returns [String]
 
+Now if we do it a third time with an empty array as the argument
+
+```
+  do_something_with_items([])
+```
+
+the profiler will see that
+
+* Calling parameter "list_of_stuff" is []
+* Local variable "newitems" is []
+* Returns []
+
 and the total signature will look something like
 
 * Method: "do_something_with_items"
     * Calling parameters
        * Name: "list_of_stuff"
-       * Types (Set): [Fixnum], [String]
+       * Types (Set): [Fixnum], [String], []
     * Local variables
        * Name: "newitems"
-       * Types (Set): [Fixnum], [String]
+       * Types (Set): [Fixnum], [String], []
     * Returns
-       * Types (Set): [Fixnum], [String]
+       * Types (Set): [Fixnum], [String], []
 
 You can "report" on the types by executing the `report` method or just inspect the json archive (if you elected to create one).
 
