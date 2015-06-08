@@ -75,6 +75,9 @@ class_list.each do |c_name, c_val|
 	class_vars[:instance] = []
 	class_vars[:methods] = []
 
+
+	#super redundant code here
+	
 	if !c_val.instance_vars.empty?
 	  c_val.instance_vars.each do |i_name, i_val|
 	  	i_vars = {}
