@@ -1,4 +1,4 @@
-require_relative 'ClassTracker.rb'
+require_relative 'ClassTracer.rb'
 
 
 #For this one we're not going to profile anything.
@@ -6,7 +6,7 @@ require_relative 'ClassTracker.rb'
 #You could / should probably do this with some sort of templating system like mustache
 
 class_archive = "SimpsonsProfile.txt"
-class_tracker = ClassTraceUtils::ClassTracker.restoreFromArchive(class_archive)
+class_tracer = ClassTraceUtils::ClassTracer.restoreFromArchive(class_archive)
 
 
 #Format our output
@@ -62,7 +62,7 @@ def suggest_types(types, nilable = nil)
 
 end
 
-class_list = class_tracker.classes
+class_list = class_tracer.classes
 class_list.each do |c_name, c_val|
 
 	if limit_to_classes.count > 0
