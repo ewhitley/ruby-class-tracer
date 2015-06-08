@@ -66,7 +66,7 @@ and the total signature will look something like
        * Name: "list_of_stuff"
        * Types (Set): [Fixnum], [String]
     * Local variables
-       * Name: "list_of_stuff"
+       * Name: "newitems"
        * Types (Set): [Fixnum], [String]
     * Returns
        * Types (Set): [Fixnum], [String]
