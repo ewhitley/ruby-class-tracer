@@ -10,7 +10,7 @@ variable
    - types []
 
 classname
-   - instance instance_variables []
+   - instance instance_vars []
    - methods []
       - method name
          - calling variables []
@@ -26,17 +26,18 @@ using a ruby set to automatically handle the duplication of types
 
   class ClassTracker
     
-    attr_accessor :classes, :archive, :archive_path, :date_generated, :date_updated, :times_run, :monitored_classes
+    attr_accessor :classes, :archive_path, :date_generated, :date_updated, :times_run, :monitored_classes, :named_like, :start_time, :end_time, :trace_duration
 
-    def initialize(monitored_classes = nil, archive = false, archive_path = nil)
-      @classes = {}
-      @archive = archive
-      @archive_path = archive_path
+    def initialize(options = {})
+      @archive_path = options[:archive_path] || 'json.txt'
+      @monitored_classes = options[:monitored_classes] || nil
+      @named_like = options[:named_like] || nil
+
       @date_generated = Time.now
       @date_updated = Time.now
       @times_run = 1
-      @monitored_classes = monitored_classes
 
+      @classes = {}
       @trace_point = self.trace_point
       @tracer = self.tracer
 
@@ -48,8 +49,9 @@ using a ruby set to automatically handle the duplication of types
       # let's check out the returns and see if we can figure out the data type
       trace_point = TracePoint.new(:return, :call) do |t|
         trace_point.disable
+        #print "."
         class_name = "#{t.defined_class}".delete('[#<>]').sub("Class:","")
-        if monitored_classes.include?(class_name) 
+        if monitored_classes.include?(class_name) || (class_name =~ /#{@named_like}/ unless @named_like == nil)
           event = "#{t.event}".delete('[:]')
           method = "#{t.method_id}"
           variable_scope = "#{event}"
@@ -67,10 +69,6 @@ using a ruby set to automatically handle the duplication of types
             #block   #block parameter
             o_method = eval("method(:#{t.method_id})", t.binding)
             o_method.parameters.each do |k,p|
-              # optional = "required"
-              # if "#{k}" == "opt"
-              #   optional = "optional"
-              # end
               arg_type = "#{k}"
               variable_name = "#{p}"
               variable = t.binding.local_variable_get(p)
@@ -87,8 +85,9 @@ using a ruby set to automatically handle the duplication of types
       # configure our tracer
       # we're going to use this to capture INSTANCE and LOCAL variables for classes and methods
       tracer = lambda do |event, file, line, id, binding, class_name|
+        #print "."
         class_name = "#{class_name}"
-        if monitored_classes.include?(class_name) && ["call", "line"].include?(event)
+        if (monitored_classes.include?(class_name)  || (class_name =~ /#{@named_like}/ unless @named_like == nil) ) && ["call", "line"].include?(event)
           me = binding.eval("self")
           binding.eval("instance_variables + local_variables").inject({}) do |vars, name|
             variable_scope = "instance"
@@ -108,6 +107,10 @@ using a ruby set to automatically handle the duplication of types
     end
 
     def start
+      puts "Starting trace"
+      puts "Tracing."
+      @start_time = Time.now
+      @trace_duration = 0
       set_trace_func @tracer
       @trace_point.enable
     end
@@ -115,6 +118,18 @@ using a ruby set to automatically handle the duplication of types
     def stop
       set_trace_func nil
       @trace_point.disable
+      @end_time = Time.now
+      @trace_duration = @end_time - @start_time
+      puts ""
+      puts "Trace complete"
+    end
+
+    def last_trace_duration
+      if @trace_duration != nil
+        puts Time.at(@trace_duration).utc.strftime("%H:%M:%S") #=> "01:00:00"
+      else
+        "No trace record found"
+      end
     end
 
     def addClassInfo(class_name, method, event, variable_scope, variable_name, variable, optional = nil)
@@ -132,19 +147,17 @@ using a ruby set to automatically handle the duplication of types
         from_json(json)
       rescue
         puts "Unable to find file #{file}. Please check file path/name. Creating new Class Tracker."
-        ClassTracker.new
+        ClassTracker.new(archive_path: file)
       end
     end
 
-    def archive(archive_path = nil, split_files = false)
+    def archive(archive_path = nil)
       archive_path ||= @archive_path
       archive_path ||= "json.txt"
-      if split_files == true 
-      else
-        File.open(archive_path, "w") do |f|
-          f.puts self.to_json
-        end
+      File.open(archive_path, "w") do |f|
+        f.puts self.to_json
       end
+      puts "Archived profile to '#{@archive_path}'"
     end
 
     def self.from_json(json)
@@ -153,19 +166,25 @@ using a ruby set to automatically handle the duplication of types
       archive = json["archive"]
       archive_path = json["archive_path"]
 
-      ct = ClassTracker.new(archive, archive_path)
+      ct = ClassTracker.new(archive_path: archive_path)
+
       ct.date_generated = json["date_generated"] if json["date_generated"]
       ct.date_generated ||= Time.now
       ct.date_updated = json["date_updated"] if json["date_updated"]
       ct.times_run = json["times_run"] if json["times_run"]
       ct.monitored_classes = json["monitored_classes"] if json["monitored_classes"]
+      ct.named_like = json["named_like"] if json["named_like"]
+
+      ct.start_time = json["start_time"] if json["start_time"]
+      ct.end_time = json["end_time"] if json["end_time"]
+      ct.trace_duration = json["trace_duration"] if json["trace_duration"]
+
 
       json["classes"].each do |c|
         class_name = c[1]["class_name"] if c[1]["class_name"]
         if class_name != nil
           aclass = ClassProfile.new(class_name)
-          c[1]["instance_variables"].each do |k,i|
-            #puts i
+          c[1]["instance_vars"].each do |k,i|
             variable_name = k
             variable_scope = "instance"
             i["types"].each do |t|
@@ -175,7 +194,7 @@ using a ruby set to automatically handle the duplication of types
           end 
           c[1]["methods"].each do |mk,m|
             method = mk
-            m["local_variables"].each do |mvk, mv|
+            m["local_vars"].each do |mvk, mv|
               variable_name = mvk
               variable_scope = "local"
               event = "local"
@@ -184,7 +203,7 @@ using a ruby set to automatically handle the duplication of types
                 aclass.addMethodSignature(method, event, variable_scope, variable_name, variable_type)
               end
             end
-            m["calling_variables"].each do |mvk, mv|
+            m["calling_vars"].each do |mvk, mv|
               variable_name = mvk
               variable_scope = "call"
               event = "call"
@@ -213,26 +232,29 @@ using a ruby set to automatically handle the duplication of types
     def to_json(*a)
       {
         "json_class"   => self.class.name,
-        "archive"   => @archive,
         "archive_path"   => @archive_path,
         "classes" => @classes,
         "date_generated" => @date_generated,
         "date_updated" => Time.now,
         "times_run" => @times_run + 1,
-        "monitored_classes" => @monitored_classes
+        "monitored_classes" => @monitored_classes,
+        "named_like" => @named_like,
+        "start_time" => @start_time,
+        "end_time" => @end_time,
+        "trace_duration" => @trace_duration
       }.to_json(*a)
     end
 
-    def ShowSomeClass
+    def report
       class_list = @classes
       puts "=========================="
       class_list.each do |c_name, c_val|
         puts "--------------------------"
         puts "CLASS: #{c_val.class_name}"
         puts "--------------------------"
-        if !c_val.instance_variables.empty?
+        if !c_val.instance_vars.empty?
           puts "  Instance Variables:"
-          c_val.instance_variables.each do |i_name, i_val|
+          c_val.instance_vars.each do |i_name, i_val|
             types = i_val.types.collect{|t| t }.join(", ")
             nilable = i_val.nilable ? "  (NILABLE)" : ""
             puts "    - #{i_name} : #{types}#{nilable}"
@@ -245,18 +267,18 @@ using a ruby set to automatically handle the duplication of types
             return_types = return_types.empty? ? return_types : "RETURNS: (#{return_types})"
             return_nilable = ""
             puts "    - #{m_name} : #{return_types}#{return_nilable}"
-            if !m_val.calling_variables.empty?
+            if !m_val.calling_vars.empty?
               puts "       - Calling Variables : "
-              m_val.calling_variables.each do |c_name, c_val|
+              m_val.calling_vars.each do |c_name, c_val|
                 types = c_val.types.collect{|t| t }.join(", ")
                 nilable = c_val.nilable ? "  (NILABLE)" : ""
                 arg_type = c_val.arg_type ? " [#{c_val.arg_type}] " : ""
                 puts "          #{c_name} : #{types}#{nilable}#{arg_type}"
               end
             end
-            if !m_val.local_variables.empty?
+            if !m_val.local_vars.empty?
               puts "       - Local Variables : "
-              m_val.local_variables.each do |l_name, l_val|
+              m_val.local_vars.each do |l_name, l_val|
                 types = l_val.types.collect{|t| t }.join(", ")
                 nilable = l_val.nilable ? "  (NILABLE)" : ""
                 arg_type = l_val.arg_type ? " [#{l_val.arg_type}] " : ""
@@ -280,12 +302,12 @@ using a ruby set to automatically handle the duplication of types
         classNames = var.collect{|x| 
           if x.class.name == "Hash"
             vnames = x.collect{|k2,v2| v2.class.name}.uniq.join(",")
-            "HASH:'#{vnames}'"
+            "Hash:'#{vnames}'"
           else
             x.class.name 
           end
           }.uniq.join(",")
-        className  = "ARRAY[#{classNames}]"
+        className  = "Array[#{classNames}]"
       elsif className == "Hash"
            var.each do |key, val|
               val_class = val.class.name
@@ -293,7 +315,7 @@ using a ruby set to automatically handle the duplication of types
                 val_class = val.collect{|x| x.class.name }.uniq.join(",")
                 val_class  = "Array[#{val_class}]"
               end
-              className = "HASH:{'#{val_class}'}"
+              className = "Hash:[#{val_class}]"
            end
       end
       className
@@ -330,26 +352,26 @@ using a ruby set to automatically handle the duplication of types
     end
 
     class MethodProfile
-      attr_accessor :name, :local_variables, :return_types, :calling_variables
+      attr_accessor :name, :local_vars, :return_types, :calling_vars
       def initialize(name, variable_scope, variable_type, variable_name, arg_type = nil)
         @name = name
-        @local_variables = {}
-        @calling_variables = {}
+        @local_vars = {}
+        @calling_vars = {}
         @return_types = Set.new []
         addVariable(variable_scope, variable_type, variable_name, arg_type)
       end
       def addVariable(variable_scope, variable_type, variable_name, arg_type = nil)
         if variable_scope == "local"
-          if @local_variables[variable_name] == nil
-            @local_variables[variable_name] = VariableProfile.new(variable_name, variable_type, arg_type)
+          if @local_vars[variable_name] == nil
+            @local_vars[variable_name] = VariableProfile.new(variable_name, variable_type, arg_type)
           else
-            @local_variables[variable_name].addType(variable_type)
+            @local_vars[variable_name].addType(variable_type)
           end
         elsif variable_scope == "call"
-          if @calling_variables[variable_name] == nil
-            @calling_variables[variable_name] = VariableProfile.new(variable_name, variable_type, arg_type)
+          if @calling_vars[variable_name] == nil
+            @calling_vars[variable_name] = VariableProfile.new(variable_name, variable_type, arg_type)
           else
-            @calling_variables[variable_name].addType(variable_type)
+            @calling_vars[variable_name].addType(variable_type)
           end
         elsif  variable_scope == "return"
           @return_types << variable_type
@@ -358,8 +380,8 @@ using a ruby set to automatically handle the duplication of types
       def to_json(*a)
         {
           "name"  => @name,
-          "local_variables" => @local_variables,
-          "calling_variables" => @calling_variables,
+          "local_vars" => @local_vars,
+          "calling_vars" => @calling_vars,
           "return_types" => @return_types.to_a
         }.to_json(*a)
       end
@@ -367,10 +389,10 @@ using a ruby set to automatically handle the duplication of types
     end
 
     class ClassProfile
-      attr_accessor :class_name, :instance_variables, :methods
+      attr_accessor :class_name, :instance_vars, :methods
       def initialize(class_name, method = nil, event = nil, variable_scope = nil, variable_name = nil, variable_type = nil, arg_type = nil)
         @class_name = class_name
-        @instance_variables = {}
+        @instance_vars = {}
         @methods = {}
         if class_name && method && event && variable_scope && variable_name && variable_type
           addMethodSignature(method, event, variable_scope, variable_name, variable_type, arg_type)
@@ -379,10 +401,10 @@ using a ruby set to automatically handle the duplication of types
 
       def addMethodSignature(method, event, variable_scope, variable_name, variable_type, arg_type = nil)
         if variable_scope == "instance"
-          if @instance_variables[variable_name] == nil
-            @instance_variables[variable_name] = VariableProfile.new(variable_name, variable_type, arg_type)
+          if @instance_vars[variable_name] == nil
+            @instance_vars[variable_name] = VariableProfile.new(variable_name, variable_type, arg_type)
           else
-            @instance_variables[variable_name].addType(variable_type)
+            @instance_vars[variable_name].addType(variable_type)
           end
         elsif ["local", "return", "call"].include?(variable_scope)
           if @methods[method] == nil
@@ -396,7 +418,7 @@ using a ruby set to automatically handle the duplication of types
       def to_json(*a)
         {
           "class_name"  => @class_name,
-          "instance_variables" => @instance_variables,
+          "instance_vars" => @instance_vars,
           "methods" => @methods
         }.to_json(*a)
       end

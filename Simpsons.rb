@@ -1,6 +1,6 @@
 
 class SimpsonsCharacter
-  attr_reader :name, :description
+  attr_reader :name, :description, :a_list
   def initialize(name, description)
     @name = name
     @description = description
@@ -16,6 +16,10 @@ class SimpsonsCharacter
     newitems = list_of_stuff.collect { |item|
       item += item
     }
+    @a_list ||= []
+    @a_list.concat list_of_stuff
+    @a_list.uniq!
+    newitems
   end
 end
 
@@ -33,4 +37,14 @@ class KWIKEMartProduct
   end
 end
 
+class BartNames
+  attr_reader :aliases
+  def initialize(alias_name)
+    @aliases = {}
+    @aliases[alias_name] = 1
+  end
+  def addAlias(alias_name)
+    @aliases[alias_name] = (@aliases[alias_name] || 0) + 1
+  end
+end
 
