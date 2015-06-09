@@ -77,7 +77,7 @@ class_list.each do |c_name, c_val|
 
 
 	#super redundant code here
-	
+
 	if !c_val.instance_vars.empty?
 	  c_val.instance_vars.each do |i_name, i_val|
 	  	i_vars = {}

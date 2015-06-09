@@ -1,6 +1,7 @@
 # ruby-class-tracer
 
-I need to port some Ruby to Swift, but type conversion was causing me some issues.
+
+I need to port some Ruby to Swift, but type conversion was causing me some issues.  Volumes I-III of the saga are here (https://www.linkedin.com/pulse/abusing-ruby-tracing-tools-help-you-port-from-swift-eric-whitley)
 
 This utility just helps me inspect what's going on with the Ruby application at runtime so I can evaluate the type information for a given class and its methods.
 
