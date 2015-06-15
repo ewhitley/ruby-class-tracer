@@ -5,7 +5,7 @@ require_relative 'ClassTracer.rb'
 #We're just going to load an existing archived profile and transform it out
 #You could / should probably do this with some sort of templating system like mustache
 
-class_archive = "SimpsonsProfile.txt"
+class_archive = "SimpsonsProfile.json"
 class_tracer = ClassTraceUtils::ClassTracer.restoreFromArchive(class_archive)
 
 

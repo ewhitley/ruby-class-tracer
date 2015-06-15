@@ -5,6 +5,8 @@ I need to port some Ruby to Swift, but type conversion was causing me some issue
 
 This utility just helps me inspect what's going on with the Ruby application at runtime so I can evaluate the type information for a given class and its methods.
 
+NOTE: if you want to create documentation from the archived json, there's a separate project that will help.  It can be found at https://github.com/ewhitley/ruby-class-tracer-document
+
 It uses set_trace_func and TracePoint to monitor execution, then logs what it finds.
 
 It creates a profile that looks something like:
@@ -22,6 +24,17 @@ It creates a profile that looks something like:
         * Local variables {Hash}
             * Variable Name (hash key)
             * Discovered types (Set)
+        * Number of times called
+    * "Namespaces" (module path, etc) [Array]
+    * Referenced Types (consolidated type information for any types referred to across methods) [Array]
+
+Additionally, trace information and some summary information is stored at the top-level within the json. It attempts to portray some higher-level trace stats and "namespace" information in the event you want to quickly review this across classes.
+
+* Trace generation and update times
+* Number of times trace has been run and archived to this file.  This ignores any changes to settings.
+* Last Trace class name / filter settings
+* Last trace duration
+* "Namespaces" (module path, etc) [Array[Array]] - this is a unique summary list across all classes
          
 This profile can be archived (json).  If you archive, you can have subsequent executions of the profiler append to the archive.  This will help in situations where different executions of the code might introduce different data types.
 

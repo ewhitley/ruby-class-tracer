@@ -26,11 +26,11 @@ using a ruby set to automatically handle the duplication of types
 
   class ClassTracer
     
-    attr_accessor :classes, :archive_path, :date_generated, :date_updated, :times_run, :monitored_classes, :named_like, :start_time, :end_time, :trace_duration
+    attr_accessor :classes, :archive_path, :date_generated, :date_updated, :times_run, :monitored_classes, :named_like, :start_time, :end_time, :trace_duration, :namespace_list
 
     def initialize(options = {})
       @archive_path = options[:archive_path] || 'json.txt'
-      @monitored_classes = options[:monitored_classes] || nil
+      @monitored_classes = options[:monitored_classes] || []
       @named_like = options[:named_like] || nil
 
       @date_generated = Time.now
@@ -42,6 +42,19 @@ using a ruby set to automatically handle the duplication of types
       @tracer = self.tracer
 
     end
+
+    def namespace_list
+      @namespace_list ||= list_namespaces
+    end
+
+    def list_namespaces
+      namespaces = []
+      @classes.each do |c,v|
+        namespaces << v.namespace_list
+      end
+      return namespaces.uniq
+    end
+
 
    def trace_point 
       # configure our TracePoint
@@ -74,6 +87,7 @@ using a ruby set to automatically handle the duplication of types
               variable = t.binding.local_variable_get(p)
               addClassInfo(class_name, method, event, variable_scope, variable_name, variable, arg_type)
             end
+            updateMethodCount(class_name, method)
           end
         end
         trace_point.enable
@@ -132,6 +146,12 @@ using a ruby set to automatically handle the duplication of types
       end
     end
 
+    def updateMethodCount(class_name, method)
+      if @classes[class_name] != nil
+        @classes[class_name].updateMethodCount(method)
+      end
+    end
+
     def addClassInfo(class_name, method, event, variable_scope, variable_name, variable, optional = nil)
       variable_type = get_var_type(variable)
       if @classes[class_name] == nil
@@ -179,11 +199,13 @@ using a ruby set to automatically handle the duplication of types
       ct.end_time = json["end_time"] if json["end_time"]
       ct.trace_duration = json["trace_duration"] if json["trace_duration"]
 
+      ct.namespace_list = json["namespace_list"] if json["namespace_list"]
 
       json["classes"].each do |c|
         class_name = c[1]["class_name"] if c[1]["class_name"]
         if class_name != nil
           aclass = ClassProfile.new(class_name)
+          aclass.namespace_list = c[1]["namespace_list"] if c[1]["namespace_list"]
           c[1]["instance_vars"].each do |k,i|
             variable_name = k
             variable_scope = "instance"
@@ -221,6 +243,7 @@ using a ruby set to automatically handle the duplication of types
               variable_type = t
               aclass.addMethodSignature(method, event, variable_scope, variable_name, variable_type)
             end
+            aclass.methods[method].times_called = m["times_called"] || 0
           end 
           ct.classes[class_name] = aclass
         end
@@ -229,7 +252,26 @@ using a ruby set to automatically handle the duplication of types
       ct
     end
 
-    def to_json(*a)
+    def to_json(options={})
+      # I have no clue why, but ... lazy-loaded variables don't seem to load correctly in the HQMF example.
+      # They work find in just pure ruby tests, but... not for the HQMF example.  If you actually "touch" the lazy
+      # variable it's populated, so the process sees it and loads it into the JSON.  But what's interesting is this works fine
+      # w/o this approach (no touching) with the pure Simpsons example.  There's some difference, but I certainly can't
+      # figure it out.  It appears that in the Simpsons example, the child to_json methods are called.  But - in the HQMF
+      # example, the child to_json methods are NOT called.  I spent a while trying to sort that out, but... can't figure it out.
+      # I'm wondering if it has something to do with the unit test framework when I run this in a rake task
+      classes = {}
+      @classes.each do |k,v|
+        classes[k] = {
+          "class_name"  => v.class_name,
+          "instance_vars" => v.instance_vars,
+          "methods" => v.methods,
+          "referenced_types" => v.referenced_types,
+          "namespace_list" => v.namespace_list
+        }
+      end
+      #and again here...lazy properties + json = bad?
+      all_namespaces = list_namespaces
       {
         "json_class"   => self.class.name,
         "archive_path"   => @archive_path,
@@ -241,8 +283,9 @@ using a ruby set to automatically handle the duplication of types
         "named_like" => @named_like,
         "start_time" => @start_time,
         "end_time" => @end_time,
-        "trace_duration" => @trace_duration
-      }.to_json(*a)
+        "trace_duration" => @trace_duration,
+        "namespace_list" => all_namespaces
+      }.to_json(options)
     end
 
     def report
@@ -348,16 +391,16 @@ using a ruby set to automatically handle the duplication of types
           "arg_type" => @arg_type
         }.to_json(*a)
       end
-
     end
 
     class MethodProfile
-      attr_accessor :name, :local_vars, :return_types, :calling_vars
+      attr_accessor :name, :local_vars, :return_types, :calling_vars, :times_called
       def initialize(name, variable_scope, variable_type, variable_name, arg_type = nil)
         @name = name
         @local_vars = {}
         @calling_vars = {}
         @return_types = Set.new []
+        @times_called = 0
         addVariable(variable_scope, variable_type, variable_name, arg_type)
       end
       def addVariable(variable_scope, variable_type, variable_name, arg_type = nil)
@@ -377,25 +420,90 @@ using a ruby set to automatically handle the duplication of types
           @return_types << variable_type
         end
       end
-      def to_json(*a)
+      def to_json(options)
         {
           "name"  => @name,
           "local_vars" => @local_vars,
           "calling_vars" => @calling_vars,
-          "return_types" => @return_types.to_a
-        }.to_json(*a)
+          "return_types" => @return_types.to_a,
+          "times_called" => @times_called
+        }.to_json(options)
       end
 
     end
 
     class ClassProfile
-      attr_accessor :class_name, :instance_vars, :methods
+      attr_accessor :class_name, :instance_vars, :methods, :referenced_types, :namespace_list
       def initialize(class_name, method = nil, event = nil, variable_scope = nil, variable_name = nil, variable_type = nil, arg_type = nil)
         @class_name = class_name
         @instance_vars = {}
         @methods = {}
         if class_name && method && event && variable_scope && variable_name && variable_type
           addMethodSignature(method, event, variable_scope, variable_name, variable_type, arg_type)
+        end
+      end
+
+      def namespace_list
+        @namespace_list ||= list_namespaces
+      end
+
+      def list_namespaces
+        return @class_name.split("::")
+      end
+
+      def referenced_types
+        @referenced_types ||= types
+      end
+
+
+      def types(options = {})
+
+        named_like = options[:named_like] || nil
+        collapse_types = options[:collapse_types] || true
+
+        _types = []
+        @instance_vars.collect{|k,v| _types.concat v.types.to_a}
+        @methods.each {|mn,mv| mv.local_vars.collect{|k2,v2| _types.concat v2.types.to_a} }
+        @methods.each {|mn,mv| mv.calling_vars.collect{|k2,v2| _types.concat v2.types.to_a} }
+        @methods.each {|mn,mv| _types.concat mv.return_types.to_a }
+        _types.uniq!
+        
+        _typesOut = []
+        _types.each { |t|
+              t = t.gsub("'", "")
+
+              if collapse_types == true
+                #puts "collapsing types"
+                #we're going to "collapse" types found in arrays and hashes - remove them from the container and split them
+                #m = t.scan(/(?:Array|Hash:)(?:\[)(.*?)(?:\])/)
+                t = t.gsub("Array[", "")
+                t = t.gsub("Hash:[", "")
+                t = t.gsub("\]", "")
+                t = t.gsub("\[", "")
+                m = t.split(",")
+                if m.count > 0
+                  m.each{|t2| _typesOut << t2 }
+                else
+                  _typesOut << t
+                end
+              else
+                _typesOut << t
+              end
+        }
+
+        _out = []
+        _typesOut.uniq.select{|t| t != class_name }.each {|v|  
+            if (v =~ /#{named_like}/ || named_like == nil) && !v.empty? 
+                #_out << {"name" => v}
+                _out << v
+            end 
+          }
+        _out.sort
+      end
+
+      def updateMethodCount(method)
+        if @methods[method] != nil
+          @methods[method].times_called += 1
         end
       end
 
@@ -415,12 +523,14 @@ using a ruby set to automatically handle the duplication of types
         end
       end
 
-      def to_json(*a)
+      def to_json(options={})
         {
           "class_name"  => @class_name,
           "instance_vars" => @instance_vars,
-          "methods" => @methods
-        }.to_json(*a)
+          "methods" => @methods,
+          "referenced_types" => @referenced_types,
+          "namespace_list" => @namespace_list
+        }.to_json(options)
       end
 
     end
