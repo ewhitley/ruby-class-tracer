@@ -1,0 +1,419 @@
+{
+  "archive_path": "SimpsonsProfile.json",
+  "classes": {
+    "Simpsons::Characters::BartNames": {
+      "class_name": "Simpsons::Characters::BartNames",
+      "instance_vars": {
+        "@aliases": {
+          "arg_type": null,
+          "name": "@aliases",
+          "nilable": false,
+          "required": null,
+          "types": [
+            "Hash",
+            "Hash:[Fixnum]"
+          ]
+        }
+      },
+      "methods": {
+        "addAlias": {
+          "calling_vars": {
+            "alias_name": {
+              "arg_type": "req",
+              "name": "alias_name",
+              "nilable": false,
+              "required": null,
+              "types": [
+                "String"
+              ]
+            }
+          },
+          "local_vars": {
+            "alias_name": {
+              "arg_type": null,
+              "name": "alias_name",
+              "nilable": false,
+              "required": null,
+              "types": [
+                "String"
+              ]
+            }
+          },
+          "name": "addAlias",
+          "return_types": [
+            "Fixnum"
+          ],
+          "times_called": 6
+        },
+        "initialize": {
+          "calling_vars": {
+            "alias_name": {
+              "arg_type": "req",
+              "name": "alias_name",
+              "nilable": false,
+              "required": null,
+              "types": [
+                "String"
+              ]
+            }
+          },
+          "local_vars": {
+            "alias_name": {
+              "arg_type": null,
+              "name": "alias_name",
+              "nilable": false,
+              "required": null,
+              "types": [
+                "String"
+              ]
+            }
+          },
+          "name": "initialize",
+          "return_types": [
+            "Fixnum"
+          ],
+          "times_called": 3
+        }
+      },
+      "namespace_list": [
+        "Simpsons",
+        "Characters",
+        "BartNames"
+      ],
+      "referenced_types": [
+        "Fixnum",
+        "Hash",
+        "String"
+      ]
+    },
+    "Simpsons::Characters::SimpsonsCharacter": {
+      "class_name": "Simpsons::Characters::SimpsonsCharacter",
+      "instance_vars": {
+        "@a_list": {
+          "arg_type": null,
+          "name": "@a_list",
+          "nilable": false,
+          "required": null,
+          "types": [
+            "Array[]",
+            "Array[String]",
+            "Array[String,Fixnum]",
+            "Array[Fixnum]"
+          ]
+        },
+        "@description": {
+          "arg_type": null,
+          "name": "@description",
+          "nilable": true,
+          "required": null,
+          "types": [
+            "String",
+            "NilClass"
+          ]
+        },
+        "@name": {
+          "arg_type": null,
+          "name": "@name",
+          "nilable": false,
+          "required": null,
+          "types": [
+            "String"
+          ]
+        }
+      },
+      "methods": {
+        "do_something_with_items": {
+          "calling_vars": {
+            "list_of_stuff": {
+              "arg_type": "req",
+              "name": "list_of_stuff",
+              "nilable": false,
+              "required": null,
+              "types": [
+                "Array[String]",
+                "Array[Fixnum]",
+                "Array[]"
+              ]
+            }
+          },
+          "local_vars": {
+            "item": {
+              "arg_type": null,
+              "name": "item",
+              "nilable": false,
+              "required": null,
+              "types": [
+                "String",
+                "Fixnum"
+              ]
+            },
+            "list_of_stuff": {
+              "arg_type": null,
+              "name": "list_of_stuff",
+              "nilable": false,
+              "required": null,
+              "types": [
+                "Array[String]",
+                "Array[Fixnum]",
+                "Array[]"
+              ]
+            },
+            "newitems": {
+              "arg_type": null,
+              "name": "newitems",
+              "nilable": true,
+              "required": null,
+              "types": [
+                "NilClass",
+                "Array[String]",
+                "Array[Fixnum]",
+                "Array[]"
+              ]
+            }
+          },
+          "name": "do_something_with_items",
+          "return_types": [
+            "Array[String]",
+            "Array[Fixnum]",
+            "Array[]"
+          ],
+          "times_called": 12
+        },
+        "initialize": {
+          "calling_vars": {
+            "description": {
+              "arg_type": "req",
+              "name": "description",
+              "nilable": true,
+              "required": null,
+              "types": [
+                "String",
+                "NilClass"
+              ]
+            },
+            "name": {
+              "arg_type": "req",
+              "name": "name",
+              "nilable": false,
+              "required": null,
+              "types": [
+                "String"
+              ]
+            }
+          },
+          "local_vars": {
+            "description": {
+              "arg_type": null,
+              "name": "description",
+              "nilable": true,
+              "required": null,
+              "types": [
+                "String",
+                "NilClass"
+              ]
+            },
+            "name": {
+              "arg_type": null,
+              "name": "name",
+              "nilable": false,
+              "required": null,
+              "types": [
+                "String"
+              ]
+            }
+          },
+          "name": "initialize",
+          "return_types": [
+            "String",
+            "NilClass"
+          ],
+          "times_called": 6
+        },
+        "simple_return": {
+          "calling_vars": {},
+          "local_vars": {},
+          "name": "simple_return",
+          "return_types": [
+            "Fixnum"
+          ],
+          "times_called": 2
+        },
+        "var_return": {
+          "calling_vars": {},
+          "local_vars": {
+            "x": {
+              "arg_type": null,
+              "name": "x",
+              "nilable": true,
+              "required": null,
+              "types": [
+                "NilClass",
+                "Fixnum"
+              ]
+            }
+          },
+          "name": "var_return",
+          "return_types": [
+            "Fixnum"
+          ],
+          "times_called": 2
+        }
+      },
+      "namespace_list": [
+        "Simpsons",
+        "Characters",
+        "SimpsonsCharacter"
+      ],
+      "referenced_types": [
+        "Fixnum",
+        "NilClass",
+        "String"
+      ]
+    },
+    "Simpsons::KWIKEMartProduct": {
+      "class_name": "Simpsons::KWIKEMartProduct",
+      "instance_vars": {
+        "@product_name": {
+          "arg_type": null,
+          "name": "@product_name",
+          "nilable": false,
+          "required": null,
+          "types": [
+            "String"
+          ]
+        },
+        "@product_price": {
+          "arg_type": null,
+          "name": "@product_price",
+          "nilable": false,
+          "required": null,
+          "types": [
+            "Float"
+          ]
+        }
+      },
+      "methods": {
+        "increase_cost": {
+          "calling_vars": {
+            "increase": {
+              "arg_type": "opt",
+              "name": "increase",
+              "nilable": false,
+              "required": null,
+              "types": [
+                "Fixnum"
+              ]
+            }
+          },
+          "local_vars": {
+            "increase": {
+              "arg_type": null,
+              "name": "increase",
+              "nilable": false,
+              "required": null,
+              "types": [
+                "Fixnum"
+              ]
+            }
+          },
+          "name": "increase_cost",
+          "return_types": [
+            "Float"
+          ],
+          "times_called": 6
+        },
+        "initialize": {
+          "calling_vars": {
+            "product_name": {
+              "arg_type": "req",
+              "name": "product_name",
+              "nilable": false,
+              "required": null,
+              "types": [
+                "String"
+              ]
+            },
+            "product_price": {
+              "arg_type": "req",
+              "name": "product_price",
+              "nilable": false,
+              "required": null,
+              "types": [
+                "Float"
+              ]
+            }
+          },
+          "local_vars": {
+            "product_name": {
+              "arg_type": null,
+              "name": "product_name",
+              "nilable": false,
+              "required": null,
+              "types": [
+                "String"
+              ]
+            },
+            "product_price": {
+              "arg_type": null,
+              "name": "product_price",
+              "nilable": false,
+              "required": null,
+              "types": [
+                "Float"
+              ]
+            }
+          },
+          "name": "initialize",
+          "return_types": [
+            "Float"
+          ],
+          "times_called": 3
+        },
+        "monitored_by_magic_hat?": {
+          "calling_vars": {},
+          "local_vars": {},
+          "name": "monitored_by_magic_hat?",
+          "return_types": [
+            "TrueClass"
+          ],
+          "times_called": 2
+        }
+      },
+      "namespace_list": [
+        "Simpsons",
+        "KWIKEMartProduct"
+      ],
+      "referenced_types": [
+        "Fixnum",
+        "Float",
+        "String",
+        "TrueClass"
+      ]
+    }
+  },
+  "date_generated": "2015-06-15 17:22:08 -0500",
+  "date_updated": "2015-06-15 17:22:12 -0500",
+  "end_time": "2015-06-15 17:22:12 -0500",
+  "json_class": "ClassTraceUtils::ClassTracer",
+  "monitored_classes": [],
+  "named_like": "Simps",
+  "namespace_list": [
+    [
+      "Simpsons",
+      "Characters",
+      "SimpsonsCharacter"
+    ],
+    [
+      "Simpsons",
+      "KWIKEMartProduct"
+    ],
+    [
+      "Simpsons",
+      "Characters",
+      "BartNames"
+    ]
+  ],
+  "start_time": "2015-06-15 17:22:12 -0500",
+  "times_run": 4,
+  "trace_duration": 0.010054
+}
