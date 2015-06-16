@@ -43,7 +43,7 @@
           "return_types": [
             "Fixnum"
           ],
-          "times_called": 6
+          "times_method_called": 8
         },
         "initialize": {
           "calling_vars": {
@@ -72,7 +72,7 @@
           "return_types": [
             "Fixnum"
           ],
-          "times_called": 3
+          "times_method_called": 4
         }
       },
       "namespace_list": [
@@ -84,7 +84,8 @@
         "Fixnum",
         "Hash",
         "String"
-      ]
+      ],
+      "times_method_called": 12
     },
     "Simpsons::Characters::SimpsonsCharacter": {
       "class_name": "Simpsons::Characters::SimpsonsCharacter",
@@ -177,7 +178,7 @@
             "Array[Fixnum]",
             "Array[]"
           ],
-          "times_called": 12
+          "times_method_called": 16
         },
         "initialize": {
           "calling_vars": {
@@ -227,7 +228,7 @@
             "String",
             "NilClass"
           ],
-          "times_called": 6
+          "times_method_called": 8
         },
         "simple_return": {
           "calling_vars": {},
@@ -236,7 +237,7 @@
           "return_types": [
             "Fixnum"
           ],
-          "times_called": 2
+          "times_method_called": 3
         },
         "var_return": {
           "calling_vars": {},
@@ -256,7 +257,7 @@
           "return_types": [
             "Fixnum"
           ],
-          "times_called": 2
+          "times_method_called": 3
         }
       },
       "namespace_list": [
@@ -268,7 +269,8 @@
         "Fixnum",
         "NilClass",
         "String"
-      ]
+      ],
+      "times_method_called": 30
     },
     "Simpsons::KWIKEMartProduct": {
       "class_name": "Simpsons::KWIKEMartProduct",
@@ -320,7 +322,7 @@
           "return_types": [
             "Float"
           ],
-          "times_called": 6
+          "times_method_called": 8
         },
         "initialize": {
           "calling_vars": {
@@ -367,7 +369,7 @@
           "return_types": [
             "Float"
           ],
-          "times_called": 3
+          "times_method_called": 4
         },
         "monitored_by_magic_hat?": {
           "calling_vars": {},
@@ -376,7 +378,7 @@
           "return_types": [
             "TrueClass"
           ],
-          "times_called": 2
+          "times_method_called": 3
         }
       },
       "namespace_list": [
@@ -388,16 +390,22 @@
         "Float",
         "String",
         "TrueClass"
-      ]
+      ],
+      "times_method_called": 15
     }
   },
-  "date_generated": "2015-06-15 17:22:08 -0500",
-  "date_updated": "2015-06-15 17:22:12 -0500",
-  "end_time": "2015-06-15 17:22:12 -0500",
+  "date_generated": "2015-06-15 19:24:10 -0500",
+  "date_updated": "2015-06-15 19:25:50 -0500",
+  "end_time": "2015-06-15 19:25:50 -0500",
   "json_class": "ClassTraceUtils::ClassTracer",
   "monitored_classes": [],
   "named_like": "Simps",
   "namespace_list": [
+    [
+      "Simpsons",
+      "Characters",
+      "BartNames"
+    ],
     [
       "Simpsons",
       "Characters",
@@ -406,14 +414,10 @@
     [
       "Simpsons",
       "KWIKEMartProduct"
-    ],
-    [
-      "Simpsons",
-      "Characters",
-      "BartNames"
     ]
   ],
-  "start_time": "2015-06-15 17:22:12 -0500",
-  "times_run": 4,
-  "trace_duration": 0.010054
+  "start_time": "2015-06-15 19:25:50 -0500",
+  "times_method_called": 57,
+  "times_run": 5,
+  "trace_duration": 0.007194
 }

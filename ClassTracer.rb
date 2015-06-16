@@ -26,7 +26,7 @@ using a ruby set to automatically handle the duplication of types
 
   class ClassTracer
     
-    attr_accessor :classes, :archive_path, :date_generated, :date_updated, :times_run, :monitored_classes, :named_like, :start_time, :end_time, :trace_duration, :namespace_list
+    attr_accessor :classes, :archive_path, :date_generated, :date_updated, :times_run, :monitored_classes, :named_like, :start_time, :end_time, :trace_duration, :namespace_list, :times_method_called
 
     def initialize(options = {})
       @archive_path = options[:archive_path] || 'json.txt'
@@ -53,6 +53,16 @@ using a ruby set to automatically handle the duplication of types
         namespaces << v.namespace_list
       end
       return namespaces.uniq
+    end
+
+    def times_method_called
+      @times_method_called ||= method_call_count
+    end
+
+    def method_call_count
+      calls = 0
+      @classes.each {|k, v| calls += v.times_method_called }
+      return calls
     end
 
 
@@ -243,7 +253,7 @@ using a ruby set to automatically handle the duplication of types
               variable_type = t
               aclass.addMethodSignature(method, event, variable_scope, variable_name, variable_type)
             end
-            aclass.methods[method].times_called = m["times_called"] || 0
+            aclass.methods[method].times_method_called = m["times_method_called"] || 0
           end 
           ct.classes[class_name] = aclass
         end
@@ -272,6 +282,7 @@ using a ruby set to automatically handle the duplication of types
       end
       #and again here...lazy properties + json = bad?
       all_namespaces = list_namespaces
+      sum_times_method_called = method_call_count
       {
         "json_class"   => self.class.name,
         "archive_path"   => @archive_path,
@@ -284,7 +295,8 @@ using a ruby set to automatically handle the duplication of types
         "start_time" => @start_time,
         "end_time" => @end_time,
         "trace_duration" => @trace_duration,
-        "namespace_list" => all_namespaces
+        "namespace_list" => all_namespaces,
+        "times_method_called" => sum_times_method_called
       }.to_json(options)
     end
 
@@ -394,13 +406,13 @@ using a ruby set to automatically handle the duplication of types
     end
 
     class MethodProfile
-      attr_accessor :name, :local_vars, :return_types, :calling_vars, :times_called
+      attr_accessor :name, :local_vars, :return_types, :calling_vars, :times_method_called
       def initialize(name, variable_scope, variable_type, variable_name, arg_type = nil)
         @name = name
         @local_vars = {}
         @calling_vars = {}
         @return_types = Set.new []
-        @times_called = 0
+        @times_method_called = 0
         addVariable(variable_scope, variable_type, variable_name, arg_type)
       end
       def addVariable(variable_scope, variable_type, variable_name, arg_type = nil)
@@ -426,14 +438,14 @@ using a ruby set to automatically handle the duplication of types
           "local_vars" => @local_vars,
           "calling_vars" => @calling_vars,
           "return_types" => @return_types.to_a,
-          "times_called" => @times_called
+          "times_method_called" => @times_method_called
         }.to_json(options)
       end
 
     end
 
     class ClassProfile
-      attr_accessor :class_name, :instance_vars, :methods, :referenced_types, :namespace_list
+      attr_accessor :class_name, :instance_vars, :methods, :referenced_types, :namespace_list, :times_method_called
       def initialize(class_name, method = nil, event = nil, variable_scope = nil, variable_name = nil, variable_type = nil, arg_type = nil)
         @class_name = class_name
         @instance_vars = {}
@@ -455,6 +467,15 @@ using a ruby set to automatically handle the duplication of types
         @referenced_types ||= types
       end
 
+      def times_method_called
+        @times_method_called ||= method_call_count
+      end
+
+      def method_call_count
+        calls = 0
+        @methods.each {|k, v| calls += v.times_method_called }
+        return calls
+      end
 
       def types(options = {})
 
@@ -503,7 +524,7 @@ using a ruby set to automatically handle the duplication of types
 
       def updateMethodCount(method)
         if @methods[method] != nil
-          @methods[method].times_called += 1
+          @methods[method].times_method_called += 1
         end
       end
 
@@ -529,7 +550,8 @@ using a ruby set to automatically handle the duplication of types
           "instance_vars" => @instance_vars,
           "methods" => @methods,
           "referenced_types" => @referenced_types,
-          "namespace_list" => @namespace_list
+          "namespace_list" => @namespace_list,
+          "times_method_called" => @times_method_called
         }.to_json(options)
       end
 
